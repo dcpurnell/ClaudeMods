@@ -1,0 +1,6 @@
+{
+  "name": "agent-pane",
+  "version": "0.1.0",
+  "description": "A side pane showing what each running agent is doing: current tool, tokens, errors and files, with view and stop buttons.",
+  "types": "./types/index.d.ts"
+}

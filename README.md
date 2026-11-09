@@ -7,6 +7,7 @@ Mods for [Claude Code](https://claude.com/claude-code). Each folder is one mod, 
 | Mod | What it does |
 | --- | --- |
 | [cache-timer](./cache-timer) | Counts down the prompt cache's one-hour window in the status line and warns before a large conversation goes cold, so you know when `/clear` saves tokens. |
+| [agent-pane](./agent-pane) | A side pane listing every running agent with what it's doing right now (current tool or file), model, tokens, tool calls, errors and files written, nested under its parent, with **view** and **stop** buttons. Finished agents drop to the bottom. `/agent-pane` opens or closes it. |
 
 ## Installing a mod
 
