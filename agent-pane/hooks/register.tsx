@@ -27,19 +27,24 @@ function fmtElapsed(ms: number): string {
   return m > 0 ? `${m}m${String(s % 60).padStart(2, '0')}s` : `${s}s`
 }
 
+/** Drops control characters so agent-supplied text can't carry terminal escape sequences. */
+function clean(s: unknown): string {
+  return String(s ?? '').replace(/[\u0000-\u001f\u007f-\u009f]/g, ' ')
+}
+
 function shortPath(p: unknown): string {
-  const s = String(p ?? '')
+  const s = clean(p)
   const parts = s.split('/')
   return parts.length > 2 ? parts.slice(-2).join('/') : s
 }
 
 function oneLine(s: unknown): string {
-  return String(s ?? '').replace(/\s+/g, ' ').trim()
+  return clean(s).replace(/\s+/g, ' ').trim()
 }
 
 /** A short line describing a tool call, for the activity row. */
 function describe(e: { tool: string } & Record<string, unknown>): string {
-  const t = String(e.tool)
+  const t = oneLine(e.tool)
   switch (t) {
     case 'Bash':
       return `Bash  ${oneLine(e.command)}`
@@ -78,8 +83,8 @@ async function reconcile($: EngineInterface): Promise<void> {
       if (!row) {
         byId.set(info.id, {
           id: info.id,
-          description: info.description,
-          type: info.type,
+          description: oneLine(info.description),
+          type: oneLine(info.type),
           parentId: info.parentId,
           startedAt: t,
           endedAt: ENDED.has(info.status) ? t : undefined,
@@ -152,9 +157,9 @@ export const register: Register = on => {
     const t = await $.clock.now()
     const row: AgentRow = {
       id: r.agentId,
-      description: e.description ?? '',
-      type: e.subagentType,
-      model: 'model' in r ? r.model : undefined,
+      description: oneLine(e.description),
+      type: oneLine(e.subagentType),
+      model: 'model' in r && r.model ? oneLine(r.model) : undefined,
       parentId: e.parentAgentId,
       startedAt: t,
       status: 'running',
@@ -173,7 +178,7 @@ export const register: Register = on => {
   on('turn.step', async function* ($, e, next) {
     if (e.agentId) {
       const id = e.agentId
-      await patch($, id, a => ({ ...a, activity: 'Thinking…', model: a.model ?? e.model }))
+      await patch($, id, a => ({ ...a, activity: 'Thinking…', model: a.model ?? oneLine(e.model) }))
     }
     const r = yield* next(e)
     if (e.agentId && r && 'usage' in r && r.usage) {
@@ -292,7 +297,7 @@ export const register: Register = on => {
                   label="view"
                   onPress={async () => {
                     const r = await $.ui.view({ agentId: a.id })
-                    if ('deny' in r && r.deny) $.ui.toast(`Can't view: ${r.deny}`)
+                    if ('deny' in r && r.deny) $.ui.toast(`Can't view: ${oneLine(r.deny)}`)
                   }}
                 />
                 {!ended && (
@@ -308,7 +313,7 @@ export const register: Register = on => {
                         })
                         $.ui.toast(`Stopping ${a.description}`)
                       } catch (err) {
-                        $.ui.toast(`Couldn't stop ${a.description}: ${String(err)}`)
+                        $.ui.toast(`Couldn't stop ${a.description}: ${oneLine(err)}`)
                       }
                     }}
                   />
